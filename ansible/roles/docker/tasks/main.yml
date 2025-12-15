@@ -1,0 +1,56 @@
+- name: Install Docker engine dependencies
+  apt:
+    update_cache: true
+    name:
+      - docker.io
+      - curl
+    state: present
+
+- name: Enable and start docker
+  service:
+    name: docker
+    state: started
+    enabled: true
+
+- name: Ensure docker group exists
+  group:
+    name: docker
+    state: present
+
+- name: Add user to docker group
+  user:
+    name: "{{ ansible_user }}"
+    groups: docker
+    append: true
+  when: ansible_user is defined
+
+# ---- Docker Compose v2 (standalone) ----
+- name: Check if docker compose is already available
+  command: docker compose version
+  register: compose_check
+  changed_when: false
+  failed_when: false
+
+- name: Install Docker Compose v2 binary (if missing)
+  when: compose_check.rc != 0
+  block:
+    - name: Detect system arch
+      command: dpkg --print-architecture
+      register: arch
+      changed_when: false
+
+    - name: Map Debian arch to Compose arch
+      set_fact:
+        compose_arch: "{{ 'aarch64' if arch.stdout == 'arm64' else 'x86_64' }}"
+
+    - name: Ensure cli-plugins directory exists
+      file:
+        path: /usr/local/lib/docker/cli-plugins
+        state: directory
+        mode: "0755"
+
+    - name: Download docker-compose v2
+      get_url:
+        url: "https://github.com/docker/compose/releases/latest/download/docker-compose-linux-{{ compose_arch }}"
+        dest: /usr/local/lib/docker/cli-plugins/docker-compose
+        mode: "0755"

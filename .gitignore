@@ -1,0 +1,7 @@
+# local / secrets
+*.retry
+.vault_pass
+**/.DS_Store
+
+# optional local overrides
+ansible/inventory.local.ini

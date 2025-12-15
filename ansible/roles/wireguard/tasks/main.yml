@@ -1,0 +1,24 @@
+- name: Create wg-easy directory
+  file:
+    path: "{{ wg_easy_dir }}"
+    state: directory
+    mode: "0755"
+
+- name: Copy wg-easy compose file
+  copy:
+    src: compose.yml
+    dest: "{{ wg_easy_dir }}/compose.yml"
+    mode: "0644"
+
+- name: Render wg-easy env file
+  template:
+    src: wg-easy.env.j2
+    dest: "{{ wg_easy_dir }}/.env"
+    mode: "0600"
+
+- name: Start wg-easy
+  community.docker.docker_compose_v2:
+    project_src: "{{ wg_easy_dir }}"
+    files:
+      - compose.yml
+    state: present

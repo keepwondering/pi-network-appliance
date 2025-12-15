@@ -1,0 +1,86 @@
+- name: Set timezone
+  community.general.timezone:
+    name: "{{ timezone }}"
+
+- name: Install baseline packages
+  apt:
+    update_cache: true
+    name:
+      - ca-certificates
+      - curl
+      - git
+      - ufw
+    state: present
+
+- name: Enable IPv4 forwarding for VPN
+  copy:
+    dest: /etc/sysctl.d/99-ipforward.conf
+    mode: "0644"
+    content: |
+      net.ipv4.ip_forward=1
+
+- name: Apply sysctl settings
+  command: sysctl --system
+  changed_when: false
+
+# DNS (Pi-hole)
+- name: Allow DNS TCP 53
+  ufw:
+    rule: allow
+    port: "53"
+    proto: tcp
+
+- name: Allow DNS UDP 53
+  ufw:
+    rule: allow
+    port: "53"
+    proto: udp
+
+# HTTP for Pi-hole UI
+- name: Allow HTTP 80
+  ufw:
+    rule: allow
+    port: "80"
+    proto: tcp
+
+# WireGuard UDP
+- name: Allow WireGuard UDP
+  ufw:
+    rule: allow
+    port: "{{ wg_port }}"
+    proto: udp
+
+# wg-easy UI (recommend: restrict to LAN later)
+- name: Allow wg-easy UI TCP (LAN)
+  ufw:
+    rule: allow
+    port: "{{ wg_ui_port }}"
+    proto: tcp
+    from_ip: "{{ lan_cidr }}"
+
+- name: Install OpenSSH server
+  apt:
+    name: openssh-server
+    state: present
+
+- name: Allow SSH
+  ufw:
+    rule: allow
+    port: "22"
+    proto: tcp
+
+# Docker + UFW: allow forwarded traffic (needed for container networking)
+- name: Ensure UFW forward policy allows docker traffic
+  lineinfile:
+    path: /etc/default/ufw
+    regexp: '^DEFAULT_FORWARD_POLICY='
+    line: 'DEFAULT_FORWARD_POLICY="ACCEPT"'
+
+- name: Reload UFW (apply forward policy change)
+  command: ufw reload
+  changed_when: false
+  failed_when: false
+
+- name: Enable UFW
+  ufw:
+    state: enabled

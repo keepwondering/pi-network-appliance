@@ -1,0 +1,23 @@
+services:
+  wg-easy:
+    image: ghcr.io/wg-easy/wg-easy:latest
+    container_name: wg-easy
+    restart: unless-stopped
+    environment:
+      LANG: "en"
+      WG_HOST: ${WG_HOST}
+      PASSWORD_HASH: ${PASSWORD_HASH}
+      WG_PORT: ${WG_PORT}
+      WG_DEFAULT_ADDRESS: "10.8.0.x"
+      WG_DEFAULT_DNS: "192.168.1.195"   # change to your Pi's LAN IP (Pi-hole)
+      WG_ALLOWED_IPS: ${WG_ALLOWED_IPS}
+    volumes:
+      - "./config:/etc/wireguard"
+    ports:
+      - "${WG_PORT}:${WG_PORT}/udp"
+      - "${WG_UI_PORT}:51821/tcp"
+    cap_add:
+      - NET_ADMIN
+      - SYS_MODULE
+    sysctls:
+      - net.ipv4.conf.all.src_valid_mark=1

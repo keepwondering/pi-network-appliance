@@ -1,0 +1,24 @@
+- name: Create pihole directory
+  file:
+    path: "{{ pihole_dir }}"
+    state: directory
+    mode: "0755"
+
+- name: Copy pihole compose file
+  copy:
+    src: compose.yml
+    dest: "{{ pihole_dir }}/compose.yml"
+    mode: "0644"
+
+- name: Render pihole env file
+  template:
+    src: pihole.env.j2
+    dest: "{{ pihole_dir }}/.env"
+    mode: "0600"
+
+- name: Start Pi-hole
+  community.docker.docker_compose_v2:
+    project_src: "{{ pihole_dir }}"
+    files:
+      - compose.yml
+    state: present
