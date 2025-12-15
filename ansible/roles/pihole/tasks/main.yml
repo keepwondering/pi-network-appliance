@@ -22,3 +22,6 @@
     files:
       - compose.yml
     state: present
+
+- name: Set Pi-hole web password
+  command: docker exec pihole pihole setpassword "{{ pihole_web_password }}"
