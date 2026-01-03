@@ -10,7 +10,7 @@ pihole_dns_2: "8.8.8.8"
 
 # ---- wg-easy / wireguard ----
 wg_easy_dir: "{{ homelab_root }}/wg-easy"
-wg_host: "your.public.dns.or.ip"   # e.g. DDNS name, or public IP for initial testing
+wg_host: "home.keepwondering.io"   # e.g. DDNS name, or public IP for initial testing
 wg_password_hash: "$2b$12$4Lwrep2Okwu/idXMd6nEaeJQqin1zxpE9yy3tQl3b/34iBxlamlTO"
 wg_port: 51820
 wg_ui_port: 51821
