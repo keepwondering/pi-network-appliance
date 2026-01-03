@@ -9,7 +9,7 @@ services:
       PASSWORD_HASH: ${PASSWORD_HASH}
       WG_PORT: ${WG_PORT}
       WG_DEFAULT_ADDRESS: "10.8.0.x"
-      WG_DEFAULT_DNS: "192.168.1.195"   # change to your Pi's LAN IP (Pi-hole)
+      WG_DEFAULT_DNS: "${WG_DEFAULT_DNS}"   # change to your Pi's LAN IP (Pi-hole)
       WG_ALLOWED_IPS: ${WG_ALLOWED_IPS}
     volumes:
       - "./config:/etc/wireguard"

@@ -7,8 +7,8 @@ services:
     environment:
       TZ: ${TZ}
       WEBPASSWORD: ${WEBPASSWORD}
-      DNS1: 1.1.1.1
-      DNS2: 8.8.8.8
+      DNS1: ${DNS1}
+      DNS2: ${DNS2}
     volumes:
       - ./etc-pihole:/etc/pihole
       - ./etc-dnsmasq.d:/etc/dnsmasq.d

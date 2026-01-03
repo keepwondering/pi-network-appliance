@@ -84,3 +84,67 @@
 - name: Enable UFW
   ufw:
     state: enabled
+
+# --- Avoid Pi-hole DNS loop: ensure the Pi host uses public DNS (NetworkManager) ---
+- name: Check if nmcli exists
+  command: which nmcli
+  register: nmcli_exists
+  changed_when: false
+  failed_when: false
+
+- name: Gather active NetworkManager connections
+  command: "nmcli -t -f DEVICE,NAME connection show --active"
+  register: nmcli_active
+  changed_when: false
+  when: nmcli_exists.rc == 0
+
+- name: Pick active interface for DNS configuration
+  set_fact:
+    nm_target_iface: >-
+      {{
+        'eth0' if (nmcli_active.stdout_lines | select('match', '^eth0:') | list | length) > 0
+        else 'wlan0'
+      }}
+  when: nmcli_exists.rc == 0
+
+- name: Pick active NM connection name for chosen interface
+  set_fact:
+    nm_connection_name: >-
+      {{
+        (nmcli_active.stdout_lines
+          | select('match', '^' ~ nm_target_iface ~ ':')
+          | list
+          | first
+          | regex_replace('^' ~ nm_target_iface ~ ':', '')
+        )
+      }}
+  when: nmcli_exists.rc == 0
+
+- name: Fail if no active NetworkManager connection found
+  fail:
+    msg: "No active NetworkManager connection found. Active: {{ nmcli_active.stdout }}"
+  when: nmcli_exists.rc == 0 and (nm_connection_name is not defined or nm_connection_name | length == 0)
+
+- name: Configure host to ignore router DNS + use public DNS (prevents Pi-hole loop)
+  command: >
+    nmcli connection modify "{{ nm_connection_name }}"
+    ipv4.ignore-auto-dns yes
+    ipv4.dns "{{ host_dns_1 }} {{ host_dns_2 }}"
+    ipv4.dns-priority -10
+  changed_when: true
+  when: nmcli_exists.rc == 0
+
+- name: Disable IPv6 on host connection (avoid router IPv6 DNS)
+  command: >
+    nmcli connection modify "{{ nm_connection_name }}"
+    ipv6.ignore-auto-dns yes
+    ipv6.method ignore
+  changed_when: true
+  when: nmcli_exists.rc == 0
+
+# SAFE: do not bring interface down (keeps SSH alive)
+- name: Reapply NetworkManager connection (safe)
+  command: nmcli connection up "{{ nm_connection_name }}"
+  changed_when: true
+  failed_when: false
+  when: nmcli_exists.rc == 0

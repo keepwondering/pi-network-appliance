@@ -23,5 +23,24 @@
       - compose.yml
     state: present
 
-- name: Set Pi-hole web password
+- name: Add split-DNS record for WIMS (LAN override)
+  lineinfile:
+    path: "{{ pihole_dir }}/etc-pihole/custom.list"
+    create: true
+    line: "{{ wims_lan_ip }} {{ wims_fqdn }}"
+    state: present
+
+- name: Force Pi-hole upstream DNS servers (idempotent enough)
+  command: docker exec pihole pihole -a setdns {{ pihole_dns_1 }} {{ pihole_dns_2 }}
+  changed_when: true
+  failed_when: false
+
+- name: Restart Pi-hole DNS after upstream change
+  command: docker exec pihole pihole restartdns
+  changed_when: true
+  failed_when: false
+
+- name: Set Pi-hole web password (best-effort)
   command: docker exec pihole pihole setpassword "{{ pihole_web_password }}"
+  changed_when: false
+  failed_when: false
