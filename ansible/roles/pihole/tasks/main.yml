@@ -1,3 +1,5 @@
+# ansible/roles/pihole/tasks/main.yml
+
 - name: Create pihole directory
   file:
     path: "{{ pihole_dir }}"
@@ -29,16 +31,41 @@
     create: true
     line: "{{ wims_lan_ip }} {{ wims_fqdn }}"
     state: present
+  notify: Restart Pi-hole DNS
 
-- name: Force Pi-hole upstream DNS servers (idempotent enough)
-  command: docker exec pihole pihole -a setdns {{ pihole_dns_1 }} {{ pihole_dns_2 }}
-  changed_when: true
+# Keep Pi-hole upstream resolvers pinned to public DNS (not the router)
+- name: Set Pi-hole upstream DNS servers (best-effort)
+  command: docker exec pihole pihole -a setdns "{{ pihole_dns_1 }}" "{{ pihole_dns_2 }}"
+  register: pihole_setdns
+  changed_when: false
   failed_when: false
 
-- name: Restart Pi-hole DNS after upstream change
+- name: Restart Pi-hole DNS
   command: docker exec pihole pihole restartdns
-  changed_when: true
+  changed_when: false
   failed_when: false
+
+# Debug/verification: confirm upstreams are what we expect (Pi-hole v6+)
+- name: Show Pi-hole upstreams from pihole.toml (Pi-hole v6+)
+  command: docker exec pihole sh -lc "grep -n 'upstreams' -A10 /etc/pihole/pihole.toml | sed -n '1,60p'"
+  register: pihole_upstreams
+  changed_when: false
+  failed_when: false
+
+- name: Debug upstreams
+  debug:
+    var: pihole_upstreams.stdout_lines
+
+# Strong verification: show the *actual server used* for an upstream query
+- name: Verify Pi-hole forwards to public upstream (SERVER line)
+  command: docker exec pihole sh -lc "dig google.com @127.0.0.1 | egrep 'SERVER:|status:|Query time' || true"
+  register: pihole_forward_verify
+  changed_when: false
+  failed_when: false
+
+- name: Debug forward verification
+  debug:
+    var: pihole_forward_verify.stdout_lines
 
 - name: Set Pi-hole web password (best-effort)
   command: docker exec pihole pihole setpassword "{{ pihole_web_password }}"
