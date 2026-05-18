@@ -58,6 +58,13 @@
     proto: tcp
     from_ip: "{{ lan_cidr }}"
 
+- name: Allow wg-easy UI TCP (WireGuard)
+  ufw:
+    rule: allow
+    port: "{{ wg_ui_port }}"
+    proto: tcp
+    from_ip: "{{ wg_vpn_cidr | default('10.8.0.0/24') }}"
+
 - name: Install OpenSSH server
   apt:
     name: openssh-server
