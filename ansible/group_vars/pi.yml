@@ -14,7 +14,7 @@ pihole_dns_2: "8.8.8.8"
 
 # ---- split DNS for WIMS ----
 wims_fqdn: "wims.keepwondering.io"
-wims_lan_ip: "192.168.1.160"
+wims_lan_ip: "192.168.0.3"
 
 # ---- wg-easy / wireguard ----
 wg_easy_dir: "{{ homelab_root }}/wg-easy"
@@ -23,7 +23,7 @@ wg_password_hash: "$2b$12$4Lwrep2Okwu/idXMd6nEaeJQqin1zxpE9yy3tQl3b/34iBxlamlTO"
 wg_port: 51820
 wg_ui_port: 51821
 wg_allowed_ips: "0.0.0.0/0, ::/0"
-lan_cidr: "192.168.1.0/24"
+lan_cidr: "192.168.0.0/24"
 
 # If you want WireGuard clients to use Pi-hole:
-pihole_ip_primary: "192.168.1.195"
+pihole_ip_primary: "192.168.0.2"
