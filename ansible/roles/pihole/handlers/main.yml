@@ -1,0 +1,4 @@
+- name: Restart Pi-hole DNS
+  command: docker exec pihole pihole restartdns
+  changed_when: false
+  failed_when: false
