@@ -9,10 +9,10 @@ services:
       - 8.8.8.8
     environment:
       TZ: ${TZ}
-      WEBPASSWORD: ${WEBPASSWORD}
-      DNS1: ${DNS1}
-      DNS2: ${DNS2}
-      IPv6: "false"
+      FTLCONF_webserver_api_password: ${PIHOLE_WEB_PASSWORD}
+      FTLCONF_dns_upstreams: ${PIHOLE_DNS_UPSTREAMS}
+      # Routed clients (e.g. Kids VLAN) need this. Restrict DNS at UniFi/UFW.
+      FTLCONF_dns_listeningMode: "ALL"
     volumes:
       - ./etc-pihole:/etc/pihole
       - ./etc-dnsmasq.d:/etc/dnsmasq.d
